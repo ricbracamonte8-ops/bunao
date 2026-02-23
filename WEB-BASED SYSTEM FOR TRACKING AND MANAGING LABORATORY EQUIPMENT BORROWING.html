@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JCSGO Laboratory — Home</title>
+  <link rel="stylesheet" href="Website.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <img src="Jcsgo.jpg" alt="JCSGO Logo" class="logo">
+    <h1>JCSGO Laboratory Equipment Tracking System</h1>
+    <nav>
+      <ul>
+        <li><a href="WEB-BASED SYSTEM FOR TRACKING AND MANAGING LABORATORY EQUIPMENT BORROWING.html" class="active">Home</a></li>
+        <li><a href="inventory.html">Inventory</a></li>
+        <li><a href="borrow.html">Borrow Equipment</a></li>
+        <li><a href="return.html">Return Equipment</a></li>
+        <li id="nav-admin"><a href="admin.html">Admin</a></li>
+        <li><button id="login-btn" class="nav-login-btn">Log in</button></li>
+      </ul>
+    </nav>
+  </header>
+
+
+  <main class="container">
+    <h2>Welcome to the JCSGO Laboratory Equipment Tracking System</h2>
+    <p>This system was designed to make managing laboratory equipment easier, faster, and more organized.</p>
+
+    <section class="form-box">
+      <h3>Quick Access</h3>
+      <p>Students can use the links below to borrow or return laboratory items:</p>
+      <ul>
+        <li><a href="borrow.html">→ Borrow Equipment</a></li>
+        <li><a href="return.html">→ Return Equipment</a></li>
+      </ul>
+
+      <p>Administrators can use the dashboard to monitor all borrowing and returning activities:</p>
+      <ul>
+        <li><a href="admin.html">→ Go to Admin Dashboard</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <p>JCSGO Laboratory Equipment Tracking System</p>
+  </footer>
+  <!-- Login modal -->
+  <div id="login-modal" class="modal" role="dialog" aria-hidden="true" aria-labelledby="login-title">
+    <div class="panel">
+      <h3 id="login-title">Sign in</h3>
+      <form id="login-form">
+        <div class="row">
+          <label for="username">Name</label>
+          <input id="username" name="username" type="text" placeholder="Your name" required>
+        </div>
+        <div class="row">
+          <label>Role</label>
+          <label><input type="radio" name="role" value="student" checked> Student</label>
+          <label style="margin-left:10px;"><input type="radio" name="role" value="staff"> Staff</label>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn ghost" id="login-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Sign in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      const hero = document.getElementById('hero');
+      const slides = Array.from(document.querySelectorAll('.hero-slide'));
+      const bg = document.querySelector('.hero-bg');
+      const left = document.querySelector('.hero-arrow.left');
+      const right = document.querySelector('.hero-arrow.right');
+      if(!slides.length || !bg || !hero) return;
+
+      let idx = slides.findIndex(s=>s.classList.contains('active'));
+      if(idx < 0) idx = 0;
+
+      function show(i){
+        slides.forEach((s, j)=> s.classList.toggle('active', j===i));
+        const image = slides[i].dataset.bg || '';
+        if(image) bg.style.backgroundImage = `url('${image}')`;
+      }
+
+      // If only one slide: make the hero static (no animation) and hide arrows
+      if(slides.length <= 1){
+        hero.classList.add('static');
+        if(left) left.style.display = 'none';
+        if(right) right.style.display = 'none';
+        show(0);
+        return; // no auto-rotate
+      }
+
+      left && left.addEventListener('click', ()=>{ idx = (idx-1+slides.length) % slides.length; show(idx); resetTimer(); });
+      right && right.addEventListener('click', ()=>{ idx = (idx+1) % slides.length; show(idx); resetTimer(); });
+
+      let timer = setInterval(()=>{ idx = (idx+1) % slides.length; show(idx); }, 6000);
+      function resetTimer(){ clearInterval(timer); timer = setInterval(()=>{ idx = (idx+1) % slides.length; show(idx); }, 6000); }
+
+      show(idx);
+    });
+  </script>
+  <script>
+    // Login modal + admin visibility (client-side mock auth)
+    document.addEventListener('DOMContentLoaded', function(){
+      const navAdmin = document.getElementById('nav-admin');
+      const loginBtn = document.getElementById('login-btn');
+      const modal = document.getElementById('login-modal');
+      const loginForm = document.getElementById('login-form');
+      const cancel = document.getElementById('login-cancel');
+
+      function getUser(){
+        try { return JSON.parse(localStorage.getItem('jcsgo_user')); } catch(e){ return null; }
+      }
+
+      function setUser(u){ localStorage.setItem('jcsgo_user', JSON.stringify(u)); }
+      function clearUser(){ localStorage.removeItem('jcsgo_user'); }
+
+      function updateAuthUI(){
+        const user = getUser();
+        if(user){
+          // show logout label for any signed-in user
+          loginBtn.textContent = `Logout (${user.name})`;
+          // only reveal Admin when role is staff
+          if(user.role === 'staff'){
+            navAdmin.style.display = 'list-item';
+            navAdmin.setAttribute('aria-hidden', 'false');
+          } else {
+            navAdmin.style.display = 'none';
+            navAdmin.setAttribute('aria-hidden', 'true');
+          }
+        } else {
+          navAdmin.style.display = 'none';
+          navAdmin.setAttribute('aria-hidden', 'true');
+          loginBtn.textContent = 'Log in';
+        }
+      }
+
+      function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.getElementById('username').focus(); }
+      function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+
+      loginBtn && loginBtn.addEventListener('click', function(){
+        const user = getUser();
+        if(user){ // logout
+          clearUser(); updateAuthUI();
+        } else { openModal(); }
+      });
+
+      cancel && cancel.addEventListener('click', function(){ closeModal(); });
+
+      loginForm && loginForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const name = (document.getElementById('username').value || '').trim();
+        const role = (loginForm.querySelector('input[name="role"]:checked') || {}).value || 'student';
+        if(!name) return alert('Please enter your name.');
+        setUser({ name: name, role: role });
+        closeModal();
+        updateAuthUI();
+      });
+
+      // close modal on ESC
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
+
+      updateAuthUI();
+    });
+  </script>
+</body>
+</html>
